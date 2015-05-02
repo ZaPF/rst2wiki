@@ -76,6 +76,7 @@ class GoogleWikiVisitor(SparseNodeVisitor):
     def __init__(self, document):
         SparseNodeVisitor.__init__(self, document)
         self.list_depth = 0
+        self.section_depth = 0
         self.list_item_prefix = None
         self.indent = self.old_indent = ''
         self.output = []
@@ -144,21 +145,25 @@ class GoogleWikiVisitor(SparseNodeVisitor):
     def depart_reference(self, node):
         self.output.append(']')
 
+    def visit_section(self, node):
+        self.section_depth += 1
+
+    def depart_section(self, node):
+        self.section_depth -= 1
+        self.list_depth = 0
+        self.indent = ''
+
     def visit_subtitle(self, node):
-        self.output.append('=== ')
+        self.output.append('='*(self.section_depth+1)+'= ')
 
     def depart_subtitle(self, node):
-        self.output.append(' ===\n\n')
-        self.list_depth = 0
-        self.indent = ''
+        self.output.append(' ='+'='*(self.section_depth+1)+'\n\n')
 
     def visit_title(self, node):
-        self.output.append('== ')
+        self.output.append('='*(self.section_depth+1)+' ')
 
     def depart_title(self, node):
-        self.output.append(' ==\n\n')
-        self.list_depth = 0
-        self.indent = ''
+        self.output.append(' '+'='*(self.section_depth+1)+'\n\n')
 
     def visit_title_reference(self, node):
         self.output.append("`")
@@ -378,7 +383,7 @@ def main(source, writer='mediawiki', mediaxml=False, docTitle=None):
         else:
             sys.stderr.write('No title found. Omitting XML.\n')
 
-    print(output)
+    print(output.decode())
 
 
 
@@ -446,7 +451,7 @@ if __name__ == '__main__':
             source = f.read()
             readOK = True
             f.close()
-        except IOError, what:
+        except IOError:
             (errno, strerror) = what
             sys.stderr.write("IO Error number", errno, "(%s)\n" % strerror)
             sys.exit(1)
