@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #Copyright (c) 2010 Juri Hamburg (Mediawiki support)
 #Copyright (c) 2007-2010 Kumar McMillan (code.google.com/p/wikir)
@@ -26,7 +27,7 @@
 # Values for Mediawiki import/export xml here.
 #CONTRIBUTOR = None
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import sys
 import re
@@ -39,6 +40,11 @@ from docutils.writers import Writer
 from docutils.core import publish_string, publish_doctree
 
 from xml.dom.minidom import Document
+
+if sys.version_info.major < 3:
+    import codecs
+    open = codecs.open
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
 class FmtHelper:
 
@@ -378,8 +384,7 @@ def main(source, writer='mediawiki', mediaxml=False, docTitle=None):
         else:
             sys.stderr.write('No title found. Omitting XML.\n')
 
-    print(output.decode())
-
+    print(output.decode('utf-8'))
 
 
 if __name__ == '__main__':
@@ -442,11 +447,11 @@ if __name__ == '__main__':
         try:
             if options.titleFromFile:
                 doctitle = args[0].split(".")[0]
-            f = open(args[0], 'r')
+            f = open(args[0], 'r', encoding='utf-8')
             source = f.read()
             readOK = True
             f.close()
-        except IOError:
+        except IOError as what:
             (errno, strerror) = what
             sys.stderr.write("IO Error number", errno, "(%s)\n" % strerror)
             sys.exit(1)
