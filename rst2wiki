@@ -26,6 +26,8 @@
 # Values for Mediawiki import/export xml here.
 #CONTRIBUTOR = None
 
+from __future__ import print_function
+
 import sys
 import re
 from optparse import OptionParser
@@ -78,9 +80,8 @@ class GoogleWikiVisitor(SparseNodeVisitor):
         self.indent = self.old_indent = ''
         self.output = []
         self.preformat = False
-        
+
     def astext(self):
-        #return ''.join(self.output)
         output = []
         for out in self.output:
             if out is not None:
@@ -88,14 +89,13 @@ class GoogleWikiVisitor(SparseNodeVisitor):
         return ''.join(output)
 
     def visit_Text(self, node):
-        #print "Text", node
         data = node.astext()
         if not self.preformat:
             data = data.lstrip('\n\r')
             data = data.replace('\r', '')
             data = data.replace('\n', ' ')
         self.output.append(data)
-    
+
     def visit_bullet_list(self, node):
         self.list_depth += 1
         self.list_item_prefix = (' ' * self.list_depth) + '* '
@@ -107,15 +107,14 @@ class GoogleWikiVisitor(SparseNodeVisitor):
         else:
             (' ' * self.list_depth) + '* '
         self.output.append('\n\n')
-                           
+
     def visit_list_item(self, node):
-        #print "list_item", node
         self.old_indent = self.indent
         self.indent = self.list_item_prefix
 
     def depart_list_item(self, node):
         self.indent = self.old_indent
-        
+
     def visit_literal_block(self, node):
         self.output.extend(['{{{', '\n'])
         self.preformat = True
@@ -123,16 +122,16 @@ class GoogleWikiVisitor(SparseNodeVisitor):
     def depart_literal_block(self, node):
         self.output.extend(['\n', '}}}', '\n\n'])
         self.preformat = False
-        
+
     def visit_paragraph(self, node):
         self.output.append(self.indent)
-        
+
     def depart_paragraph(self, node):
         self.output.append('\n\n')
         if self.indent == self.list_item_prefix:
             # we're in a sub paragraph of a list item
             self.indent = ' ' * self.list_depth
-        
+
     def visit_reference(self, node):
         if node.has_key('refuri'):
             href = node['refuri']
@@ -152,7 +151,7 @@ class GoogleWikiVisitor(SparseNodeVisitor):
         self.output.append(' ===\n\n')
         self.list_depth = 0
         self.indent = ''
-        
+
     def visit_title(self, node):
         self.output.append('== ')
 
@@ -160,7 +159,7 @@ class GoogleWikiVisitor(SparseNodeVisitor):
         self.output.append(' ==\n\n')
         self.list_depth = 0
         self.indent = ''
-        
+
     def visit_title_reference(self, node):
         self.output.append("`")
 
@@ -172,13 +171,13 @@ class GoogleWikiVisitor(SparseNodeVisitor):
 
     def depart_emphasis(self, node):
         self.output.append('*')
-        
+
     def visit_literal(self, node):
         self.output.append('`')
-        
+
     def depart_literal(self, node):
         self.output.append('`')
-   
+
 class MediaWikiVisitor(GoogleWikiVisitor):
     """visits RST nodes and transforms into MediaWiki syntax.
     """
@@ -201,13 +200,13 @@ class MediaWikiVisitor(GoogleWikiVisitor):
 
     def depart_strong(self, node):
         self.output.append('\'\'\'')
-        
+
     def visit_literal(self, node):
         self.output.append('<code>')
-        
+
     def depart_literal(self, node):
         self.output.append('</code>')
-        
+
     def _visit_list(self, node, bullet):
         self.list_depth += 1
         self.list_item_prefix = bullet * self.list_depth
@@ -237,7 +236,7 @@ class MediaWikiVisitor(GoogleWikiVisitor):
 
     def depart_enumerated_list(self, node):
         self._depart_list(node, '#')
-            
+
     def visit_term(self, node):
         self.output.append('; ')
 
@@ -249,7 +248,7 @@ class MediaWikiVisitor(GoogleWikiVisitor):
 
     def visit_paragraph(self, node):
         self.output.append(self.indent)
-        
+
     def depart_paragraph(self, node):
         if self.indent == self.list_item_prefix:
             self.output.append('\n')
@@ -266,7 +265,6 @@ class MediaWikiVisitor(GoogleWikiVisitor):
         del atts['uri']
         if not atts.has_key('alt'):
             atts['alt'] = atts['src']
-        #print atts
         self.output.extend(['[[File:', atts['src'], '|', atts['alt'], ']]'])
 
     def depart_image(self, node):
@@ -280,7 +278,7 @@ class MediaWikiVisitor(GoogleWikiVisitor):
 
     def visit_comment(self, node):
         self.output.append('<!-- ')
-    
+
     def depart_comment(self, node):
         self.output.extend([' --!>', '\n'])
 
@@ -303,7 +301,7 @@ class MediawikiXMLWrapper():
         string
         """
         doc = Document()
-        
+
         #create elements
         elMwiki       = doc.createElement("mediawiki")
         elPage        = doc.createElement("page")
@@ -317,7 +315,7 @@ class MediawikiXMLWrapper():
         doc.appendChild(elMwiki)
         elMwiki.setAttribute("xmlns", "http://www.mediawiki.org/xml/export-0.4/")
         elMwiki.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-        elMwiki.setAttribute("xsi:schemaLocation", 
+        elMwiki.setAttribute("xsi:schemaLocation",
                 "http://www.mediawiki.org/xml/export-0.4/ http://www.mediawiki.org/xml/export-0.4.xsd")
         elMwiki.setAttribute("version", "0.4")
         elMwiki.setAttribute("xml:lang", "de")
@@ -374,19 +372,19 @@ def main(source, writer='mediawiki', mediaxml=False, docTitle=None):
         if docTitle:
             mwrap = MediawikiXMLWrapper()
             #mediawiki allows no camelcased syntax for titles on export?
-            docTitle = fh.splitCamelCase(docTitle.strip()) 
+            docTitle = fh.splitCamelCase(docTitle.strip())
             docTitle = docTitle.title()
             output = mwrap.wrapInMinimalHeader(docTitle, output)
         else:
             sys.stderr.write('No title found. Omitting XML.\n')
 
-    print output
-    
+    print(output)
+
 
 
 if __name__ == '__main__':
 
-    
+
     usage       = "usage: %prog [options] arg"
     optparser   = OptionParser(usage)
     validwriters= ('mediawiki', 'googlewiki')
@@ -459,7 +457,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if not source and not readOK:
-        source = sys.stdin.read() 
+        source = sys.stdin.read()
     elif not source and readOK:
         source = ''
         #sys.stderr.write("no input to process.\n")
