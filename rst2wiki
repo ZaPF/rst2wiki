@@ -40,10 +40,6 @@ from docutils.core import publish_string, publish_doctree
 
 from xml.dom.minidom import Document
 
-import pdb
-
-#pdb.set_trace()
-
 class FmtHelper:
 
     def splitCamelCase(self, camelcase):
@@ -354,7 +350,6 @@ def main(source, writer='mediawiki', mediaxml=False, docTitle=None):
     output = publish_string(output, **kw)
 
     #xml wrap
-    #pdb.set_trace()
     if mediaxml:
         if not docTitle:
             doctreedom = publish_doctree(source).asdom()
