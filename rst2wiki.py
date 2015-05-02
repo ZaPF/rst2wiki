@@ -73,7 +73,7 @@ class GoogleWikiVisitor(SparseNodeVisitor):
         SparseNodeVisitor.__init__(self, document)
         self.list_depth = 0
         self.section_depth = 0
-        self.list_item_prefix = None
+        self.list_item_prefix = ''
         self.indent = self.old_indent = ''
         self.output = []
         self.preformat = False
@@ -208,17 +208,8 @@ class MediaWikiVisitor(GoogleWikiVisitor):
     def depart_literal(self, node):
         self.output.append('</code>')
 
-    def _visit_list(self, node, bullet):
-        self.list_depth += 1
-        self.list_item_prefix = bullet * self.list_depth
-
-    def _depart_list(self, node, bullet):
+    def _depart_list(self, node):
         next_node = node.next_node()
-        self.list_depth -= 1
-        if self.list_depth == 0:
-            self.list_item_prefix = None
-        else:
-            self.list_item_prefix = bullet * self.list_depth
         output_sep = True
         if isinstance(next_node, nodes.list_item):
             if self.list_depth > 0:
@@ -227,16 +218,18 @@ class MediaWikiVisitor(GoogleWikiVisitor):
             self.output.append('\n\n')
 
     def visit_bullet_list(self, node):
-        self._visit_list(node, "*")
+        self.list_item_prefix += '*'
 
     def depart_bullet_list(self, node):
-        self._depart_list(node, '*')
+        self.list_item_prefix = self.list_item_prefix[:-1]
+        self._depart_list(node)
 
     def visit_enumerated_list(self, node):
-        self._visit_list(node, "#")
+        self.list_item_prefix += '#'
 
     def depart_enumerated_list(self, node):
-        self._depart_list(node, '#')
+        self.list_item_prefix = self.list_item_prefix[:-1]
+        self._depart_list(node)
 
     def visit_term(self, node):
         self.output.append('; ')
